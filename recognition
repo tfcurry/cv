@@ -1,0 +1,52 @@
+import numpy as np
+class UI_1():
+    result=0;
+    def print_1(self,x_0,x1,x2,x3,x4,x5,lmlist):
+        lmlist=np.array(lmlist)
+        if (lmlist[8,0]-lmlist[6,0])>0 and (lmlist[12,0]-lmlist[10,0])>0 and (lmlist[16,0]-lmlist[14,0])<0 and (lmlist[20,0]-lmlist[18,0])<0:
+            result=97+7;
+        elif (lmlist[8,0]-lmlist[6,0])>0 and (lmlist[12,0]-lmlist[10,0])<0 and (lmlist[16,0]-lmlist[14,0])<0 and (lmlist[20,0]-lmlist[18,0])<0:
+            result=97+6;
+        elif x1==0 and x2==1 and x3==1 and x4==1 and x5==1:
+            result=97+1;
+        elif x1==0 and x2==1 and x3==0 and x4==0 and x5==0 and lmlist[8,1]-lmlist[7,1]<-25:
+            result=97+3;
+        elif x1==0 and x2==1 and x3==0 and x4==0 and x5==0 and lmlist[8,1]-lmlist[7,1]>-25:
+            result=97+23;
+        elif x1==0 and x2==0 and x3==1 and x4==1 and x5==1:
+            result=97+5;
+        elif x1==0 and x2==0 and x3==0 and x4==0 and x5==1:
+            result=97+8;
+        elif x1==1 and x2==1 and x3==1 and x4==0 and x5==0:
+            result=97+10;
+        elif x1==1 and x2==1 and x3==0 and x4==0 and x5==0:
+            result=97+11;
+        elif x1==0 and x2==1 and x3==1 and x4==1 and x5==0:
+            result=97+22;
+        elif x1==1 and x2==0 and x3==0 and x4==0 and x5==1:
+            result=97+24;
+        elif x1==1 and x2==0 and x3==0 and x4==0 and x5==0 and lmlist[4,0]>lmlist[6,0]:
+            result=97;
+        elif x2==0 and x3==0 and x4==0 and x5==0 and lmlist[4,0]<lmlist[6,0]:
+            result=97+4;
+        # elif x1 == 0 and x2 == 0 and x3 == 0 and x4 == 0 and x5 == 0 and
+        elif x1==1 and x2==1 and x3==1 and x4==1 and x5==1:
+            result=97+2;
+        elif x1==0 and x2==1 and x3==1 and x4==0 and x5==0 and self.jiajiao(lmlist[6],lmlist[5],lmlist[10],lmlist[9])>0.97 and lmlist[12,0]<lmlist[8,0]:        #5,6,9,10
+            result=97+20;
+        elif x1==0 and x2==1 and x3==1 and x4==0 and x5==0 and self.jiajiao(lmlist[6],lmlist[5],lmlist[10],lmlist[9])<=0.97 and lmlist[12,0]<lmlist[8,0]:        #5,6,9,10
+            result=97+21;
+        elif x1==0 and x2==1 and x3==1 and x4==0 and x5==0 and lmlist[12,0]>=lmlist[8,0]:
+            result=97+17;
+        elif x1==1 and x2==1 and x3==0 and x4==0 and x5==0:
+            result=97+11;
+        else:
+            result=x_0;
+        return result;
+    def jiajiao(self, x1, x2, x3, x4):  # x1:起始点1，x2:终止点1,x3:起始点2,x4:终止点2
+            l_1 = np.linalg.norm(np.array(x2) - np.array(x1))
+            l_2 = np.linalg.norm(np.array(x4) - np.array(x3))
+            index_1 = np.array(x2) - np.array(x1)
+            index_2 = np.array(x4) - np.array(x3)
+            l_3 = index_1[0] * index_2[0] + index_1[1] * index_2[1]
+            return l_3 / (l_1 * l_2)
