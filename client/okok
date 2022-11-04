@@ -1,0 +1,30 @@
+import cv2
+import numpy as np
+import math
+import matplotlib
+import os
+from keras.models import load_model
+import numpy as np
+from PIL import Image
+#加载模型h5文件
+model = load_model("gesture.h5")
+# model.summary()
+from matplotlib import pyplot as plt
+image = cv2.imread("sy35.png") #读取图片
+o1, o2, o3 = image.shape;
+bound_1, bound_2, bound_3, bound_4 = o1-72, o1-2, 2, 72;
+cv2.rectangle(image, (bound_1, bound_3),
+                      (bound_2, bound_4),
+                      (0, 255, 0), 2)
+print(image.shape)
+imgry = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #转化为灰度图
+imgry=cv2.resize(imgry,[28,28])
+print(imgry.size)
+plt.imshow(imgry,cmap="gray",
+               interpolation='none')
+plt.show()
+
+imgry=imgry.reshape(1,28,28)
+# print(imgry)
+c=model.predict(imgry)
+print(np.argmax(c))
