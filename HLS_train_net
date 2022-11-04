@@ -1,0 +1,180 @@
+import numpy as np # 线性代数
+import pandas as pd # 数据处理
+from matplotlib import pyplot as plt
+# ??%matplotlib inline
+plt.rcParams['font.family'] = 'sans-serif'    # 用来正常显示中文
+plt.rcParams['font.sans-serif'] = 'SimHei'
+plt.rcParams['axes.unicode_minus'] = False   # 设置正常显示符号
+
+
+# 忽略第三方支援库更新兼容性提示
+import warnings
+warnings.simplefilter('ignore')
+
+import seaborn as sns
+import tensorflow as tf
+from tensorflow import keras
+from keras.models import Sequential
+from keras.layers import Dense, Conv2D , MaxPool2D
+from keras.layers import Flatten , Dropout , BatchNormalization
+from keras.preprocessing.image import ImageDataGenerator
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report,confusion_matrix
+from sklearn.metrics import f1_score, recall_score, precision_score
+from keras.callbacks import ReduceLROnPlateau
+
+train_df = pd.read_csv("gesture_train.csv")
+test_df = pd.read_csv("gesture_test.csv")
+test = pd.read_csv("gesture_test.csv")
+y = test['label']
+train_df.head()
+plt.figure(figsize = (10,10)) # 标签计数
+sns.set_style("darkgrid")
+sns.countplot(train_df['label'])
+# 切分样本特征与标签
+y_train = train_df['label']
+y_test = test_df['label']
+del train_df['label']
+del test_df['label']
+# 二值化标签
+from sklearn.preprocessing import LabelBinarizer
+# 初始化二值化标签模型
+label_binarizer = LabelBinarizer()
+# 拟合目标 dataframe，生成训练集与测试集 y
+y_train = label_binarizer.fit_transform(y_train)
+y_test = label_binarizer.fit_transform(y_test)
+x_train = train_df.values
+x_test = test_df.values
+# 像素值归一化
+x_train = x_train / 255
+x_test = x_test / 255
+# 通过 CNN 的输入，根据需要（-1）将数据从 1 维重构为 4 维
+x_train = x_train.reshape(-1,28,28,1)
+x_test = x_test.reshape(-1,28,28,1)
+print(x_train.shape)
+print(x_test.shape)
+f, ax = plt.subplots(2,5)
+f.set_size_inches(10, 10)
+# 通过简单的双层循环嵌入填入子图
+k = 0
+for i in range(2):
+    for j in range(5):
+        ax[i,j].imshow(x_train[k].reshape(28, 28) , cmap = "gray")
+        k += 1
+    plt.tight_layout()
+# 使用数据增广技术充实训练数据，并应用防止过拟合技术
+datagen = ImageDataGenerator(
+        featurewise_center=False,              # 去中心化，在数据集中将输入特征的平均值设置为 0
+        samplewise_center=False,               # 将每个样本均值设为 0
+        featurewise_std_normalization=False,   # 将输入除以数据集的 STD 标准差
+        samplewise_std_normalization=False,    # 将每个输入除以它的 STD 标准差
+        zca_whitening=False,                   # 应用 ZCA 白化
+        rotation_range=10,                      # 在范围角度( 0 到 180 )内随机旋转图像
+        zoom_range = 0.1,                       # 随机缩放图像
+        width_shift_range=0.1,                  # 水平随机移动图像 (占总宽度的比例)
+        height_shift_range=0.1,                 # 随机垂直移动图像 (占总高度的比例)
+        horizontal_flip=False,                 # 随机垂直翻转图像
+        vertical_flip=False)                   # 随机水平翻转图像
+
+# 使用数据增广器拟合数据
+datagen.fit(x_train)
+learning_rate_reduction = ReduceLROnPlateau(monitor='val_accuracy', # 监测值
+                                            # 容忍网路的性能不提升的次数，高于这个次数就降低学习率
+                                            patience = 2,
+                                            # 控制输出信息明细
+                                            verbose=1,
+                                            # 降低因子，表示学习率每次降低多少
+                                            factor=0.5,
+                                            # 学习率下限
+                                            min_lr=0.00001)
+model = Sequential()
+# 卷积块 1
+model.add(Conv2D(200 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu' , input_shape = (28,28,1)))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 2
+model.add(Conv2D(180 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 3
+model.add(Conv2D(160 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 4
+model.add(Conv2D(140, (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu' ))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 5
+model.add(Conv2D(120, (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 6
+model.add(Conv2D(100 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 7
+model.add(Conv2D(80 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 8
+model.add(Conv2D(60 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 9
+model.add(Conv2D(40 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+# 卷积块 10
+model.add(Conv2D(25 , (3,3) , strides = 1 , padding = 'same' ,
+                 activation = 'relu'))
+model.add(BatchNormalization())
+model.add(MaxPool2D((2,2) , strides = 2 , padding = 'same'))
+
+
+# 展平并使用全连接层输出
+# 对于多分类问题使用 softmax 作为激活函数
+model.add(Flatten())
+model.add(Dense(units = 512 , activation = 'relu'))
+model.add(Dropout(0.3))
+model.add(Dense(units = 24 , activation = 'softmax'))
+
+# 输出模型概要
+model.summary()
+import time # 记录模型训练时间
+start_sum = time.time() # 记录训练开始时间
+
+# 模型编译
+model.compile(optimizer = 'adam' ,
+              loss = 'categorical_crossentropy' ,
+              metrics = ['accuracy'])
+
+# 模型拟合，直接采用测试集作为验证集
+history = model.fit(datagen.flow(x_train,y_train, batch_size = 128),
+                    epochs = 20, # 20
+                    validation_data = (x_test, y_test),
+                    # 自动调整学习率  vc
+                    callbacks = [learning_rate_reduction])
+
+end_sum = time.time() # 记录训练结束时间 
+print('训练总耗时：',end_sum - start_sum, '秒')
+print("模型的准确率为：" , model.evaluate(x_test,y_test)[1]*100 , "%")
+model.save('gesture.h5')
